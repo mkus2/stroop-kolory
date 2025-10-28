@@ -131,7 +131,116 @@ function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
 function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
 function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
-/* makeTrial dla Eksperymentu 2 - nazywanie kolorów */
+/* ====== GENERATOR PRÓB — WERSJA ZBALANSOWANA ======
+   - Blok kwadratów: każdy kolor 5× (przy 25 próbach)
+   - Blok słów (niekongruentne): każdy tusz 5× i każde słowo 5×; brak dopasowań słowo==tusz
+   ================================================= */
+
+/* pomocnicze: tablice powtórzeń */
+function repeatArray(arr, times){
+  var out = [];
+  for(var i=0;i<times;i++) for(var j=0;j<arr.length;j++) out.push(arr[j]);
+  return out;
+}
+
+/* znajdź obiekt koloru po HEX lub nazwie */
+function colorByHex(hex){ return COLORS.find(function(c){ return c.css===hex; }); }
+function colorByWord(w){ return COLORS.find(function(c){ return c.word===w; }); }
+
+/* tworzy zbalansowane próby KWADRATÓW dla n (n musi być wielokrotnością 5) */
+function makeBalancedSquares(n){
+  if(n % COLORS.length !== 0){
+    throw new Error("Liczba prób kwadratów musi być wielokrotnością "+COLORS.length);
+  }
+  var reps = n / COLORS.length;        // np. 25/5 = 5
+  var inkList = repeatArray(COLORS, reps); // każdy kolor powtórzony reps razy
+  inkList = shuffle(inkList);          // losowa kolejność przy zachowaniu proporcji
+
+  return inkList.map(function(c){
+    return {
+      stimulus_type: "square",
+      stim_word: "SQUARE",
+      ink_color: c.css,
+      congruency: 1,        // (zostawiam, jak w Twoich danych)
+      correct_key: c.key,
+      correct_idx: c.idx
+    };
+  });
+}
+
+/* derangement na zbiorze etykiet słów względem kolorów tuszu:
+   zwraca listę słów (nazw), gdzie słowo ≠ nazwa koloru tuszu w tej pozycji */
+function derangeWordsAgainstInks(inkNames, wordNames){
+  // Prosty sposób: dopóki jest konflikt, tasuj wordNames (z zachowaniem liczności)
+  // Tu działa sprawnie, bo mamy po 5 każdego i 25 pozycji.
+  var ok = false, perm = wordNames.slice();
+  var guard = 0;
+  while(!ok){
+    perm = shuffle(perm);
+    ok = true;
+    for(var i=0;i<perm.length;i++){
+      if(perm[i] === inkNames[i]){ ok = false; break; }
+    }
+    guard++;
+    if(guard>10000){
+      // awaryjnie: cykliczne przesunięcia
+      var shift = 1 + Math.floor(Math.random()*4); // 1..4
+      perm = wordNames.map(function(_,i){ return wordNames[(i+shift)%wordNames.length]; });
+      ok = true;
+      for(var k=0;k<perm.length;k++){
+        if(perm[k] === inkNames[k]){ ok=false; break; }
+      }
+      if(ok) break;
+      guard = 0;
+    }
+  }
+  return perm;
+}
+
+/* tworzy zbalansowane próby SŁÓW (NIEKONGRUENTNE) dla n (n musi być wielokrotnością 5) */
+function makeBalancedWordsIncongruent(n){
+  if(n % COLORS.length !== 0){
+    throw new Error("Liczba prób słów musi być wielokrotnością "+COLORS.length);
+  }
+  var reps = n / COLORS.length; // np. 25/5 = 5
+
+  // Każdy tusz 5×:
+  var inks = repeatArray(COLORS, reps);       // lista obiektów kolorów (dla tuszu)
+  inks = shuffle(inks);                       // permutujemy kolejność tuszy
+
+  // Każde SŁOWO 5×:
+  var wordNamesPool = repeatArray(COLORS.map(function(c){return c.word;}), reps);
+
+  // Zbuduj listy nazw (dla derangementu na poziomie pozycji)
+  var inkNames = inks.map(function(c){ return c.word; }); // nazwy (CZERWONY/ZIELONY...) odpowiadają tuszom
+  var wordsDeranged = derangeWordsAgainstInks(inkNames, wordNamesPool);
+
+  // Sklej gotowe próby (niekongruentne)
+  var trials = [];
+  for(var i=0;i<n;i++){
+    var ink = inks[i];              // {word, css, key, idx}
+    var stimName = wordsDeranged[i]; // String
+    // gwarancja bezpieczeństwa (teoretycznie niepotrzebne po derangement):
+    if(stimName === ink.word){
+      // zamień miejscami ze średnim elementem
+      var swapWith = (i+1) % n;
+      var tmp = wordsDeranged[i]; wordsDeranged[i] = wordsDeranged[swapWith]; wordsDeranged[swapWith] = tmp;
+      stimName = wordsDeranged[i];
+    }
+    trials.push({
+      stimulus_type: "word",
+      stim_word: stimName,
+      ink_color: ink.css,
+      congruency: 0,          // niekongruentne
+      correct_key: ink.key,   // klawisz zawsze po kolorze tuszu
+      correct_idx: ink.idx
+    });
+  }
+  // dodatkowe tasowanie
+  return shuffle(trials);
+}
+
+/* makeTrial dla treningu — bez zmian (losowy, może dawać kongruentne/nie) */
 function makeTrial(isSquare, baseColor) {
   var color = baseColor || pick(COLORS);
   
@@ -160,15 +269,23 @@ function makeTrial(isSquare, baseColor) {
   }
 }
 
-/* buildTrials - buduje próby */
+/* buildTrials - buduje próby
+   - training: stara logika (jak było)
+   - forceSquares===true  -> ZBALANSOWANE KWADRATY
+   - forceSquares===false -> ZBALANSOWANE SŁOWA (NIEKONGRUENTNE) */
 function buildTrials(n, forceSquares) {
   var trials = [];
   
   if(forceSquares !== undefined) {
-    for(var i = 0; i < n; i++) {
-      trials.push(makeTrial(forceSquares));
+    if(forceSquares === true){
+      // === BLOK 1: KWADRATY — zbalansowane ===
+      trials = makeBalancedSquares(n);         // każdy kolor po równo
+    } else {
+      // === BLOK 2: SŁOWA — zbalansowane i niekongruentne ===
+      trials = makeBalancedWordsIncongruent(n);// każdy tusz po równo, słowa po równo, bez zgodności
     }
   } else {
+    // === TRENING — jak było (losowo) ===
     var half = Math.floor(n/2);
     for(var i = 0; i < half; i++) {
       trials.push(makeTrial(true));
@@ -176,9 +293,9 @@ function buildTrials(n, forceSquares) {
     for(var i = 0; i < n - half; i++) {
       trials.push(makeTrial(false));
     }
+    shuffle(trials);
   }
   
-  shuffle(trials);
   return trials;
 }
 
