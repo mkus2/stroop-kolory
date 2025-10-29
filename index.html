@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Stroop Eksperyment 2 - Nazywanie Kolorów</title>
+<title>Stroop Eksperyment 2 - Nazywanie Kolorów (Grupa K)</title>
 <style>
   html,body{height:100%}
   body{
@@ -17,7 +17,6 @@
   h1,h2{margin:0 0 12px} p{line-height:1.5}
   .muted{color:#555}
 
-  /* Bodziec tekstowy */
   .big{
     font-family:'Calibri','Segoe UI',Roboto,sans-serif;
     font-size:92px;
@@ -30,35 +29,19 @@
     -webkit-font-smoothing:antialiased;
     -moz-osx-font-smoothing:grayscale;
   }
-  
-  /* Kwadrat kolorowy */
   .square{
-    width:200px;
-    height:200px;
-    margin:0 auto;
-    border:2px solid rgba(0,0,0,.1);
-    box-shadow:0 2px 8px rgba(0,0,0,.1);
+    width:200px;height:200px;margin:0 auto;
+    border:2px solid rgba(0,0,0,.1); box-shadow:0 2px 8px rgba(0,0,0,.1);
   }
-  
-  @media (max-width: 900px){ 
-    .big{ font-size:84px; }
-    .square{ width:180px; height:180px; }
-  }
-  @media (max-width: 700px){ 
-    .big{ font-size:76px; }
-    .square{ width:160px; height:160px; }
-  }
-  @media (max-width: 560px){ 
-    .big{ font-size:68px; }
-    .square{ width:140px; height:140px; }
-  }
+  @media (max-width: 900px){ .big{ font-size:84px } .square{ width:180px; height:180px } }
+  @media (max-width: 700px){ .big{ font-size:76px } .square{ width:160px; height:160px } }
+  @media (max-width: 560px){ .big{ font-size:68px } .square{ width:140px; height:140px } }
 
   .fix{font-size:48px;color:#666}
   .btn{background:#2d6cdf;color:#fff;border:none;border-radius:10px;padding:10px 16px;cursor:pointer;font-size:16px}
   .row{margin:18px 0}
   input[type=text]{font-size:18px;padding:8px 10px;border-radius:8px;border:1px solid #999;background:#fff;color:#111;letter-spacing:2px;text-transform:uppercase;text-align:center}
 
-  /* Instrukcja + pigułki klawiszy */
   .keypill{
     display:inline-flex;align-items:center;gap:8px;
     background:#fff;color:#111;border-radius:999px;
@@ -71,8 +54,7 @@
     background:#f3f3f3;font-weight:800;
   }
   .keypill .color-box{
-    width:20px;height:20px;border-radius:4px;
-    border:1px solid rgba(0,0,0,.2);
+    width:20px;height:20px;border-radius:4px;border:1px solid rgba(0,0,0,.2);
   }
   .instr-card{
     background:#fff;color:#111;border-radius:16px;padding:18px 20px;
@@ -83,22 +65,16 @@
   .instr-card p{ margin:8px 0 12px }
   .center{ text-align:center }
 
-  /* Karta bodźca */
   .stim-card{
     background:#fff; border:1px solid #ddd; box-shadow:0 4px 18px rgba(0,0,0,.08);
     border-radius:18px; padding:40px 28px; display:inline-block; min-width: min(90vw, 780px);
   }
 
-  /* Wynik */
   .stats{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:8px}
-  .statpill{
-    background:#fff;border:1px solid #ddd;border-radius:12px;
-    padding:8px 12px;font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.06)
-  }
-  .block-info{
-    background:#fff5dc;border:1px solid #dda;border-radius:8px;
-    padding:10px;margin:15px 0;font-weight:600;
-  }
+  .statpill{ background:#fff;border:1px solid #ddd;border-radius:12px;
+    padding:8px 12px;font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.06) }
+  .block-info{ background:#fff5dc;border:1px solid #dda;border-radius:8px;
+    padding:10px;margin:15px 0;font-weight:600; }
 </style>
 </head>
 <body>
@@ -109,7 +85,6 @@
 var CONFIG = {
   TRAIN_N: 10,
   TEST_N: 50,
-  MAX_RT: 2000,
   ITI: 200,
   FIX: 300,
   SAFETY_MS: 15000,
@@ -118,197 +93,143 @@ var CONFIG = {
 
 /* ------- KOLORY ------- */
 var COLORS = [
-  { word:"CZERWONY",  css:"#D32F2F", key:"c", idx:1 },
-  { word:"ZIELONY",   css:"#2E7D32", key:"z", idx:2 },
-  { word:"NIEBIESKI", css:"#1565C0", key:"n", idx:3 },
-  { word:"FIOLETOWY", css:"#6A1B9A", key:"f", idx:4 },
-  { word:"BRĄZOWY",   css:"#6D4C41", key:"b", idx:5 }
+  { name:"CZERWONY",  hex:"#D32F2F", key:"c", idx:1 },
+  { name:"ZIELONY",   hex:"#2E7D32", key:"z", idx:2 },
+  { name:"NIEBIESKI", hex:"#1565C0", key:"n", idx:3 },
+  { name:"FIOLETOWY", hex:"#6A1B9A", key:"f", idx:4 },
+  { name:"BRĄZOWY",   hex:"#6D4C41", key:"b", idx:5 }
 ];
 
 /* ------- UTIL ------- */
 var app = document.getElementById('app');
-function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
-function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function colorByHex(hex){ return COLORS.find(c => c.hex===hex); }
+function colorByName(nm){ return COLORS.find(c => c.name===nm); }
 
-/* ====== GENERATOR PRÓB — WERSJA ZBALANSOWANA ======
-   - Blok kwadratów: każdy kolor 5× (przy 25 próbach)
-   - Blok słów (niekongruentne): każdy tusz 5× i każde słowo 5×; brak dopasowań słowo==tusz
-   ================================================= */
+/* ====== GENERATOR PRÓB (zbilansowany, niekongruentny, brak powtórzeń) ====== */
+function repeatArray(arr, times){ const out=[]; for(let i=0;i<times;i++) out.push(...arr); return out; }
 
-/* pomocnicze: tablice powtórzeń */
-function repeatArray(arr, times){
-  var out = [];
-  for(var i=0;i<times;i++) for(var j=0;j<arr.length;j++) out.push(arr[j]);
-  return out;
-}
-
-/* znajdź obiekt koloru po HEX lub nazwie */
-function colorByHex(hex){ return COLORS.find(function(c){ return c.css===hex; }); }
-function colorByWord(w){ return COLORS.find(function(c){ return c.word===w; }); }
-
-/* tworzy zbalansowane próby KWADRATÓW dla n (n musi być wielokrotnością 5) */
-function makeBalancedSquares(n){
-  if(n % COLORS.length !== 0){
-    throw new Error("Liczba prób kwadratów musi być wielokrotnością "+COLORS.length);
-  }
-  var reps = n / COLORS.length;        // np. 25/5 = 5
-  var inkList = repeatArray(COLORS, reps); // każdy kolor powtórzony reps razy
-  inkList = shuffle(inkList);          // losowa kolejność przy zachowaniu proporcji
-
-  return inkList.map(function(c){
-    return {
-      stimulus_type: "square",
-      stim_word: "SQUARE",
-      ink_color: c.css,
-      congruency: 1,        // (zostawiam, jak w Twoich danych)
-      correct_key: c.key,
-      correct_idx: c.idx
-    };
-  });
-}
-
-/* derangement na zbiorze etykiet słów względem kolorów tuszu:
-   zwraca listę słów (nazw), gdzie słowo ≠ nazwa koloru tuszu w tej pozycji */
-function derangeWordsAgainstInks(inkNames, wordNames){
-  // Prosty sposób: dopóki jest konflikt, tasuj wordNames (z zachowaniem liczności)
-  // Tu działa sprawnie, bo mamy po 5 każdego i 25 pozycji.
-  var ok = false, perm = wordNames.slice();
-  var guard = 0;
-  while(!ok){
-    perm = shuffle(perm);
-    ok = true;
-    for(var i=0;i<perm.length;i++){
-      if(perm[i] === inkNames[i]){ ok = false; break; }
-    }
-    guard++;
-    if(guard>10000){
-      // awaryjnie: cykliczne przesunięcia
-      var shift = 1 + Math.floor(Math.random()*4); // 1..4
-      perm = wordNames.map(function(_,i){ return wordNames[(i+shift)%wordNames.length]; });
-      ok = true;
-      for(var k=0;k<perm.length;k++){
-        if(perm[k] === inkNames[k]){ ok=false; break; }
+function fixNoImmediateRepeats(trials){
+  for(let i=1;i<trials.length;i++){
+    const prev = trials[i-1], cur = trials[i];
+    if(prev.stim_word === cur.stim_word || prev.ink_color === cur.ink_color){
+      for(let j=i+1;j<trials.length;j++){
+        const cand = trials[j], next = trials[i+1];
+        const okPrev = cand.stim_word !== prev.stim_word && cand.ink_color !== prev.ink_color;
+        const okNext = !next || (cand.stim_word !== next.stim_word && cand.ink_color !== next.ink_color);
+        if(okPrev && okNext){ [trials[i], trials[j]] = [trials[j], trials[i]]; break; }
       }
-      if(ok) break;
-      guard = 0;
     }
   }
-  return perm;
-}
-
-/* tworzy zbalansowane próby SŁÓW (NIEKONGRUENTNE) dla n (n musi być wielokrotnością 5) */
-function makeBalancedWordsIncongruent(n){
-  if(n % COLORS.length !== 0){
-    throw new Error("Liczba prób słów musi być wielokrotnością "+COLORS.length);
-  }
-  var reps = n / COLORS.length; // np. 25/5 = 5
-
-  // Każdy tusz 5×:
-  var inks = repeatArray(COLORS, reps);       // lista obiektów kolorów (dla tuszu)
-  inks = shuffle(inks);                       // permutujemy kolejność tuszy
-
-  // Każde SŁOWO 5×:
-  var wordNamesPool = repeatArray(COLORS.map(function(c){return c.word;}), reps);
-
-  // Zbuduj listy nazw (dla derangementu na poziomie pozycji)
-  var inkNames = inks.map(function(c){ return c.word; }); // nazwy (CZERWONY/ZIELONY...) odpowiadają tuszom
-  var wordsDeranged = derangeWordsAgainstInks(inkNames, wordNamesPool);
-
-  // Sklej gotowe próby (niekongruentne)
-  var trials = [];
-  for(var i=0;i<n;i++){
-    var ink = inks[i];              // {word, css, key, idx}
-    var stimName = wordsDeranged[i]; // String
-    // gwarancja bezpieczeństwa (teoretycznie niepotrzebne po derangement):
-    if(stimName === ink.word){
-      // zamień miejscami ze średnim elementem
-      var swapWith = (i+1) % n;
-      var tmp = wordsDeranged[i]; wordsDeranged[i] = wordsDeranged[swapWith]; wordsDeranged[swapWith] = tmp;
-      stimName = wordsDeranged[i];
-    }
-    trials.push({
-      stimulus_type: "word",
-      stim_word: stimName,
-      ink_color: ink.css,
-      congruency: 0,          // niekongruentne
-      correct_key: ink.key,   // klawisz zawsze po kolorze tuszu
-      correct_idx: ink.idx
-    });
-  }
-  // dodatkowe tasowanie
-  return shuffle(trials);
-}
-
-/* makeTrial dla treningu — bez zmian (losowy, może dawać kongruentne/nie) */
-function makeTrial(isSquare, baseColor) {
-  var color = baseColor || pick(COLORS);
-  
-  if(isSquare) {
-    return {
-      stimulus_type: "square",
-      stim_word: "SQUARE",
-      ink_color: color.css,
-      congruency: 1,
-      correct_key: color.key,
-      correct_idx: color.idx
-    };
-  } else {
-    var inkColor = color;
-    var otherWords = COLORS.filter(function(c){ return c.css !== inkColor.css; });
-    var word = pick(otherWords);
-    
-    return {
-      stimulus_type: "word",
-      stim_word: word.word,
-      ink_color: inkColor.css,
-      congruency: 0,
-      correct_key: inkColor.key,
-      correct_idx: inkColor.idx
-    };
-  }
-}
-
-/* buildTrials - buduje próby
-   - training: stara logika (jak było)
-   - forceSquares===true  -> ZBALANSOWANE KWADRATY
-   - forceSquares===false -> ZBALANSOWANE SŁOWA (NIEKONGRUENTNE) */
-function buildTrials(n, forceSquares) {
-  var trials = [];
-  
-  if(forceSquares !== undefined) {
-    if(forceSquares === true){
-      // === BLOK 1: KWADRATY — zbalansowane ===
-      trials = makeBalancedSquares(n);         // każdy kolor po równo
-    } else {
-      // === BLOK 2: SŁOWA — zbalansowane i niekongruentne ===
-      trials = makeBalancedWordsIncongruent(n);// każdy tusz po równo, słowa po równo, bez zgodności
-    }
-  } else {
-    // === TRENING — jak było (losowo) ===
-    var half = Math.floor(n/2);
-    for(var i = 0; i < half; i++) {
-      trials.push(makeTrial(true));
-    }
-    for(var i = 0; i < n - half; i++) {
-      trials.push(makeTrial(false));
-    }
-    shuffle(trials);
-  }
-  
   return trials;
 }
 
-/* CSV utils */
+/* ——— NC: kwadraty (baseline nazywania koloru) ——— */
+function makeNC(n){
+  if(n % COLORS.length !== 0) throw new Error("Liczba prób (NC) musi być wielokrotnością "+COLORS.length);
+  const reps = n / COLORS.length;
+  let inks = repeatArray(COLORS.map(c => c.hex), reps);
+  inks = shuffle(inks);
+  let trials = inks.map(hex => {
+    const col = colorByHex(hex);
+    return {
+      phase: "test_squares",
+      task: "name_color",
+      stim_word: "SQUARE",
+      ink_color: hex,
+      congruency: 2,              // neutralne
+      correct_key: col.key,
+      correct_idx: col.idx
+    };
+  });
+  return fixNoImmediateRepeats(trials);
+}
+
+/* ——— NCWd: słowa w obcych kolorach (TYLKO niekongruentne) ——— */
+function makeNCWd(n){
+  if(n % COLORS.length !== 0) throw new Error("Liczba prób (NCWd) musi być wielokrotnością "+COLORS.length);
+  const reps = n / COLORS.length;
+  // tusze po równo
+  let inks = repeatArray(COLORS.map(c => c.hex), reps);
+  inks = shuffle(inks);
+  // słowa po równo
+  let words = repeatArray(COLORS.map(c => c.name), reps);
+
+  // derangement: słowo ≠ kolor tuszu w pozycji
+  let ok=false, guard=0;
+  while(!ok){
+    words = shuffle(words);
+    ok = true;
+    for(let i=0;i<n;i++){
+      if(colorByName(words[i]).hex === inks[i]){ ok=false; break; }
+    }
+    guard++;
+    if(guard>5000){
+      for(let k=0;k<n;k++){
+        if(colorByName(words[k]).hex === inks[k]){
+          for(let m=k+1;m<n;m++){
+            const wK = colorByName(words[k]).hex, wM = colorByName(words[m]).hex;
+            if(wM !== inks[k] && wK !== inks[m]){ [words[k], words[m]] = [words[m], words[k]]; break; }
+          }
+        }
+      }
+      ok = true;
+      for(let t=0;t<n;t++){ if(colorByName(words[t]).hex === inks[t]){ ok=false; break; } }
+      if(ok) break;
+      guard=0;
+    }
+  }
+
+  let trials = [];
+  for(let i=0;i<n;i++){
+    const wordName = words[i];
+    const inkHex = inks[i];
+    const col = colorByHex(inkHex); // poprawna odpowiedź = kolor tuszu
+    trials.push({
+      phase: "test_words",
+      task: "name_color",
+      stim_word: wordName,
+      ink_color: inkHex,
+      congruency: 0,         // niekongruentne
+      correct_key: col.key,
+      correct_idx: col.idx
+    });
+  }
+  return fixNoImmediateRepeats(shuffle(trials));
+}
+
+/* ——— Trening: miks (połowa NC, połowa NCWd) ——— */
+function makeTrialTraining(){
+  const flip = Math.random()<0.5;
+  if(flip){
+    const col = pick(COLORS);
+    return { phase:"training", task:"name_color", stim_word:"SQUARE", ink_color:col.hex, congruency:2, correct_key:col.key, correct_idx:col.idx };
+  } else {
+    const inkCol  = pick(COLORS);
+    const wordCol = pick(COLORS.filter(c => c.name!==inkCol.name));
+    return { phase:"training", task:"name_color", stim_word:wordCol.name, ink_color:inkCol.hex, congruency:0, correct_key:inkCol.key, correct_idx:inkCol.idx };
+  }
+}
+function buildTrials(n, type){
+  if(type==='NC') return makeNC(n);
+  if(type==='NCWd') return makeNCWd(n);
+  // training
+  const trials=[]; for(let i=0;i<n;i++) trials.push(makeTrialTraining());
+  return fixNoImmediateRepeats(trials);
+}
+
+/* ------- CSV utils ------- */
 function toCSV(rows){
   if(!rows.length) return "no_data\n";
-  var header = Object.keys(rows[0]);
-  var out = [header.join(",")];
-  for(var i=0;i<rows.length;i++){
-    var r = rows[i], line = [];
-    for(var k=0;k<header.length;k++){
-      var h = header[k];
-      var v = (r[h]==null ? "" : String(r[h]).replace(/"/g,'""'));
+  const header = Object.keys(rows[0]);
+  const out = [header.join(",")];
+  for(let i=0;i<rows.length;i++){
+    const r=rows[i], line=[];
+    for(let k=0;k<header.length;k++){
+      const h=header[k];
+      const v=(r[h]==null ? "" : String(r[h]).replace(/"/g,'""'));
       line.push(/["\n,]/.test(v) ? '"'+v+'"' : v);
     }
     out.push(line.join(","));
@@ -316,8 +237,8 @@ function toCSV(rows){
   return out.join("\n");
 }
 function downloadCSV(filename, csv){
-  var blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
-  var a = document.createElement("a");
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = filename;
   document.body.appendChild(a);
@@ -326,42 +247,57 @@ function downloadCSV(filename, csv){
 }
 
 /* ------- APLIKACJA ------- */
-var PID = "";
-var LOG = [];
-var blockNumber = 0;
+let SUBJECT = null;    // { code, num, isEven }
+let LOG = [];
+let blockNumber = 0;
+let MAIN_ORDER = [];   // ['test_squares','test_words'] lub odwrotnie
+
+function parseSubjectCode(code){
+  const m = /^K\s*(\d{2})$/.exec((code||"").trim().toUpperCase());
+  if(!m) return null;
+  const num = parseInt(m[1],10);
+  const isEven = (num % 2 === 0);
+  return { code: "K"+m[1], num, isEven };
+}
 
 function screenIntro(){
   app.innerHTML =
-    '<h2>Eksperyment Stroopa 2 - Nazywanie Kolorów</h2>' +
-    '<div class="row"><p>Wpisz swoje inicjały (2 litery, np. AK) i naciśnij „Dalej".</p>' +
-    '<input id="pid" type="text" maxlength="2" placeholder="AK" autofocus></div>' +
+    '<h2>Eksperyment Stroopa 2 — Grupa K (Kolory)</h2>' +
+    '<div class="row"><p>Wpisz przydzielony Tobie kod <strong>(jedna litera i dwie cyfry, np. K01)</strong> i naciśnij „Dalej”.</p>' +
+    '<input id="pid" type="text" maxlength="3" pattern="[Kk][0-9]{2}" placeholder="np. K03" autofocus></div>' +
     '<div class="row"><button class="btn" id="next1">Dalej</button></div>';
   document.getElementById('next1').onclick = function(){
-    var v = (document.getElementById('pid').value||"").trim().toUpperCase();
-    if(!/^[A-ZĄĆĘŁŃÓŚŹŻ]{2}$/.test(v)){ alert("Podaj dokładnie 2 litery."); return; }
-    PID = v;
+    const v = (document.getElementById('pid').value||"").trim().toUpperCase();
+    const info = parseSubjectCode(v);
+    if(!info){ alert("Nieprawidłowy kod. Użyj formatu K01..K99."); return; }
+    SUBJECT = info;
     screenInstr();
   };
 }
 
 function screenInstr(){
+  // parzyste -> NC -> NCWd; nieparzyste -> NCWd -> NC
+  MAIN_ORDER = SUBJECT.isEven ? ['test_squares','test_words'] : ['test_words','test_squares'];
+  const firstLabel  = (MAIN_ORDER[0]==='test_squares') ? 'Kwadraty (nazywanie koloru)' : 'Słowa w obcych kolorach (nazywanie koloru, niekongruentne)';
+  const secondLabel = (MAIN_ORDER[1]==='test_squares') ? 'Kwadraty (nazywanie koloru)' : 'Słowa w obcych kolorach (nazywanie koloru, niekongruentne)';
+
   app.innerHTML =
     '<div class="instr-card">' +
-      '<h3 class="center">Instrukcja - NAZYWANIE KOLORÓW</h3>' +
-      '<p class="center" style="font-size:20px;color:#d22;font-weight:700">⚠️ NAZYWAJ KOLORY, ignoruj słowa!</p>' +
-      '<p class="center">Twoim zadaniem jest jak najszybsze <b>NAZWANIE KOLORU</b>,<br>który widzisz na ekranie.</p>' +
+      '<h3 class="center">Instrukcja — NAZYWANIE KOLORU</h3>' +
+      '<p class="center" style="font-size:20px;color:#d22;font-weight:700">⚠️ ZAWSZE PODAWAJ <u>KOLOR ATRAMENTU</u>! Ignoruj TREŚĆ SŁOWA.</p>' +
+      '<p class="center">Twoim zadaniem jest jak najszybsze <b>NAZWANIE KOLORU</b>, w którym widzisz bodziec (kwadrat lub słowo).</p>' +
       '<div class="center" style="margin:10px 0 6px">' +
-        '<span class="keypill"><span class="k">C</span><span class="color-box" style="background:#D32F2F"></span> Czerwony</span>' +
-        '<span class="keypill"><span class="k">Z</span><span class="color-box" style="background:#2E7D32"></span> Zielony</span>' +
-        '<span class="keypill"><span class="k">N</span><span class="color-box" style="background:#1565C0"></span> Niebieski</span>' +
-        '<span class="keypill"><span class="k">F</span><span class="color-box" style="background:#6A1B9A"></span> Fioletowy</span>' +
-        '<span class="keypill"><span class="k">B</span><span class="color-box" style="background:#6D4C41"></span> Brązowy</span>' +
+        '<span class="keypill"><span class="k">C</span>= czerwony</span>' +
+        '<span class="keypill"><span class="k">Z</span>= zielony</span>' +
+        '<span class="keypill"><span class="k">N</span>= niebieski</span>' +
+        '<span class="keypill"><span class="k">F</span>= fioletowy</span>' +
+        '<span class="keypill"><span class="k">B</span>= brązowy</span>' +
       '</div>' +
       '<p class="center muted">' +
         'Najpierw trening (10 prób), potem test w 2 blokach:<br>' +
-        '<b>Blok 1:</b> kolorowe kwadraty (25 prób)<br>' +
-        '<b>Blok 2:</b> słowa w różnych kolorach (25 prób) - <b>nadal nazywaj KOLOR!</b><br>' +
-        'Odpowiadaj <b>szybko i poprawnie</b>. Jeśli się pomylisz - <b>naciśnij właściwy klawisz</b>.' +
+        '<b>Blok 1:</b> '+firstLabel+' (25 prób)<br>' +
+        '<b>Blok 2:</b> '+secondLabel+' (25 prób)<br>' +
+        'Odpowiadaj <b>szybko i poprawnie</b>. Jeśli się pomylisz — naciśnij właściwy klawisz.' +
       '</p>' +
       '<p class="center" style="color:#b22222;font-weight:700;">⚠️ Upewnij się, że <u>CAPS LOCK jest wyłączony</u>.</p>' +
       '<div class="center" style="margin-top:10px">' +
@@ -372,62 +308,53 @@ function screenInstr(){
 }
 
 async function runBlock(phase, ntrials){
-  var trials;
-  
-  if(phase === "training") {
-    trials = buildTrials(ntrials);
-  } else if(phase === "test_squares") {
-    blockNumber = 1;
-    trials = buildTrials(ntrials, true);
-  } else if(phase === "test_words") {
-    blockNumber = 2;
-    trials = buildTrials(ntrials, false);
+  let trials;
+  if(phase === "training"){
+    trials = buildTrials(ntrials, 'training');
+  } else if(phase === "test_squares"){
+    blockNumber = (MAIN_ORDER[0]==='test_squares') ? 1 : 2;
+    trials = buildTrials(ntrials, 'NC');
+  } else if(phase === "test_words"){
+    blockNumber = (MAIN_ORDER[0]==='test_words') ? 1 : 2;
+    trials = buildTrials(ntrials, 'NCWd');
   }
 
-  for(var i=0;i<trials.length;i++){
+  for(let i=0;i<trials.length;i++){
     app.innerHTML = '<div class="fix">+</div>';
     await sleep(CONFIG.FIX);
 
-    var t = trials[i];
-    var start = performance.now();
-    
-    if(t.stimulus_type === "square"){
-      app.innerHTML = '<div class="stim-card"><div class="square" style="background-color:'+t.ink_color+';"></div></div>';
-    } else {
-      app.innerHTML = '<div class="stim-card"><div class="big" style="color:'+t.ink_color+';">'+t.stim_word+'</div></div>';
-    }
+    const t = trials[i];
+    const start = performance.now();
 
-    var result = await new Promise(function(resolve){
-      var errors = 0;
-      var timer;
+    const stimHTML = (t.stim_word==="SQUARE")
+      ? '<div class="stim-card"><div class="square" style="background-color:'+t.ink_color+';"></div></div>'
+      : '<div class="stim-card"><div class="big" style="color:'+t.ink_color+';">'+t.stim_word+'</div></div>';
+    app.innerHTML = stimHTML;
 
+    const result = await new Promise(resolve => {
+      let errors = 0; let timer;
       function onKey(e){
-        var k = (e.key||"").toLowerCase();
+        const k = (e.key||"").toLowerCase();
         if(k==="c"||k==="z"||k==="n"||k==="f"||k==="b"){
           if(k !== t.correct_key){ errors++; return; }
-          var rt = Math.round(performance.now() - start);
-          cleanup();
-          resolve({ key:k, status:1, rt:rt, errors:errors });
+          const rt = Math.round(performance.now() - start);
+          cleanup(); resolve({ key:k, status:1, rt, errors });
         }
       }
-      function onTimeout(){
-        cleanup();
-        resolve({ key:"", status:3, rt: CONFIG.SAFETY_MS, errors:errors });
-      }
-      function cleanup(){
-        window.removeEventListener('keydown', onKey);
-        clearTimeout(timer);
-      }
+      function onTimeout(){ cleanup(); resolve({ key:"", status:3, rt: CONFIG.SAFETY_MS, errors }); }
+      function cleanup(){ window.removeEventListener('keydown', onKey); clearTimeout(timer); }
       window.addEventListener('keydown', onKey);
       timer = setTimeout(onTimeout, CONFIG.SAFETY_MS);
     });
 
     LOG.push({
-      pid: PID,
+      subject_code: SUBJECT.code,
+      group: "COLOR",
+      order_even: SUBJECT.isEven,
       phase: phase,
       block: blockNumber,
       trial_num: i + 1,
-      stimulus_type: t.stimulus_type,
+      task: "name_color",
       stim_word: t.stim_word,
       ink_color: t.ink_color,
       congruency: t.congruency,
@@ -444,52 +371,51 @@ async function runBlock(phase, ntrials){
   }
 
   if(phase === "training"){
+    const nextLabel = (MAIN_ORDER[0]==='test_squares') ? 'Kwadraty (25 prób)' : 'Słowa w obcych kolorach (25 prób)';
     app.innerHTML =
       '<div class="block-info">Trening zakończony!</div>' +
       '<p>Teraz rozpocznie się test właściwy.</p>' +
-      '<p><b>BLOK 1:</b> Kolorowe kwadraty (25 prób)</p>' +
+      '<p><b>BLOK 1:</b> '+ nextLabel +'</p>' +
       '<div class="row"><button class="btn" id="startBlock1">Start Bloku 1</button></div>';
-    document.getElementById('startBlock1').onclick = function(){ runBlock("test_squares", 25); };
-  } else if(phase === "test_squares"){
+    document.getElementById('startBlock1').onclick = function(){ runBlock(MAIN_ORDER[0], 25); };
+  } else if(phase === MAIN_ORDER[0]){
+    const nextLabel2 = (MAIN_ORDER[1]==='test_squares') ? 'Kwadraty (25 prób)' : 'Słowa w obcych kolorach (25 prób)';
     app.innerHTML =
       '<div class="block-info">Blok 1 zakończony!</div>' +
-      '<p><b>BLOK 2:</b> Słowa w kolorach niezgodnych (25 prób)</p>' +
-      '<p class="muted" style="font-size:18px;color:#d22;"><b>⚠️ Pamiętaj: nadal NAZYWAJ KOLOR atramentu, ignoruj słowo!</b></p>' +
+      '<p><b>BLOK 2:</b> '+ nextLabel2 +'</p>' +
+      '<p class="muted" style="font-size:18px;color:#d22;"><b>⚠️ Pamiętaj: NAZYWAJ KOLOR atramentu, ignoruj słowo.</b></p>' +
       '<div class="row"><button class="btn" id="startBlock2">Start Bloku 2</button></div>';
-    document.getElementById('startBlock2').onclick = function(){ runBlock("test_words", 25); };
+    document.getElementById('startBlock2').onclick = function(){ runBlock(MAIN_ORDER[1], 25); };
   } else {
     finish();
   }
 }
 
 async function finish(){
-  var testSquares = LOG.filter(function(r){ return r.phase==="test_squares"; });
-  var testWords = LOG.filter(function(r){ return r.phase==="test_words"; });
-  
+  const nc   = LOG.filter(r => r.phase==="test_squares");
+  const ncwd = LOG.filter(r => r.phase==="test_words");
+
   function avgRT(arr){
-    var valid = arr.filter(function(r){ return r.status===1 && r.rt < CONFIG.SAFETY_MS; });
+    const valid = arr.filter(r => r.status===1 && r.rt < CONFIG.SAFETY_MS);
     if(!valid.length) return 0;
-    var sum = valid.reduce(function(a,b){ return a + b.rt; }, 0);
+    const sum = valid.reduce((a,b) => a + b.rt, 0);
     return Math.round(sum / valid.length);
   }
-  
-  var rtSquares = avgRT(testSquares);
-  var rtWords = avgRT(testWords);
-  var difference = rtWords - rtSquares;
-  var percentIncrease = rtSquares > 0 ? ((difference / rtSquares) * 100).toFixed(1) : 0;
 
-  var summaryHTML =
+  const rtNC   = avgRT(nc);
+  const rtNCWd = avgRT(ncwd);
+  const difference = rtNCWd - rtNC;
+  const percentIncrease = rtNC > 0 ? ((difference / rtNC) * 100).toFixed(1) : 0;
+
+  const summaryHTML =
     '<div class="instr-card">'+
-      '<h3 class="center">Twoje wyniki - Eksperyment 2 (Nazywanie)</h3>'+
+      '<h3 class="center">Twoje wyniki — Grupa K (Kolory)</h3>'+
       '<div class="stats">'+
-        '<span class="statpill">Blok 1 (kwadraty): '+rtSquares+' ms</span>'+
-        '<span class="statpill">Blok 2 (słowa): '+rtWords+' ms</span>'+
-        '<span class="statpill">Interferencja: +'+difference+' ms ('+percentIncrease+'%)</span>'+
+        '<span class="statpill">Kwadraty (NC): '+rtNC+' ms</span>'+
+        '<span class="statpill">Słowa (NCWd): '+rtNCWd+' ms</span>'+
+        '<span class="statpill">Różnica: +'+difference+' ms ('+percentIncrease+'%)</span>'+
       '</div>'+
-      '<p class="center muted" style="margin-top:12px">'+
-        'W oryginalnym badaniu Stroopa interferencja wynosiła 47 s (74.3%) dla 100 bodźców.<br>'+
-        'To pokazuje, jak silnie automatyczne czytanie interferuje z nazywaniem kolorów.'+
-      '</p>'+
+      '<p class="center muted" style="margin-top:12px">W klasycznym eksperymencie Stroopa nazywanie koloru słów (niekongruentnych) jest wyraźnie wolniejsze niż nazywanie koloru kwadratów.</p>'+
     '</div>';
 
   app.innerHTML = '<h2>Koniec</h2><p class="muted">Trwa zapisywanie wyników…</p>';
@@ -507,8 +433,8 @@ async function finish(){
     }catch(e){}
   }
 
-  var csv = toCSV(LOG);
-  var fname = 'stroop_exp2_name_'+PID+'_'+new Date().toISOString().replace(/[:.]/g,'-')+'.csv';
+  const csv = toCSV(LOG);
+  const fname = 'stroop_exp2_K_'+(SUBJECT?SUBJECT.code:'KXX')+'_'+new Date().toISOString().replace(/[:.]/g,'-')+'.csv';
   downloadCSV(fname, csv);
   app.innerHTML = summaryHTML + '<p class="muted center" style="margin-top:12px">Nie udało się połączyć z serwerem — pobrano plik z wynikami.</p>';
 }
