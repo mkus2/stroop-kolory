@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Stroop — Grupa K (Nazywanie koloru) — 13-13-12-12</title>
+<title>Stroop — Nazywanie Kolorów (Grupa K)</title>
 <style>
   html,body{height:100%}
   body{
@@ -59,9 +59,7 @@
   }
 
   .block-info{ background:#fff5dc;border:1px solid #dda;border-radius:8px; padding:10px;margin:15px 0;font-weight:600; }
-  .stats{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:8px}
-  .statpill{ background:#fff;border:1px solid #ddd;border-radius:12px;
-    padding:8px 12px;font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.06) }
+  .progress{color:#2d6cdf;font-weight:600;margin-top:8px}
 </style>
 </head>
 <body>
@@ -73,9 +71,9 @@ var CONFIG = {
   ITI: 200,
   FIX: 300,
   SAFETY_MS: 15000,
-  ENDPOINT_URL: "https://script.google.com/macros/s/AKfycbwYYPeeYrs13z9DpfiiU6chq-ovapPQMWer1g_-JnIepuT1ljyTYMHChTCFfE29mgY9Zg/exec",
+  ENDPOINT_URL: "https://script.google.com/macros/s/AKfycbxLToW0bWfIpFl6iFhJYAeVkZ6_O94yguDE7y1m6uCwi9GJY3gJ7DQ3NQTK-J6UhTmsNA/exec",
   DOWNLOAD_CSV_FALLBACK: true,
-  SEND_TIMEOUT_MS: 25000
+  SEND_TIMEOUT_MS: 10000
 };
 
 /* ------- KOLORY ------- */
@@ -90,21 +88,18 @@ var COLORS = [
 /* ------- UTIL ------- */
 var app = document.getElementById('app');
 function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
-function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
-function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-function colorByHex(hex){ return COLORS.find(c => c.hex===hex); }
-function colorByName(nm){ return COLORS.find(c => c.name===nm); }
+function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
 
 /* ====== GENERATORY ====== */
 function fixNoImmediateRepeats(trials){
-  for(let i=1;i<trials.length;i++){
-    const prev = trials[i-1], cur = trials[i];
+  for(var i=1;i<trials.length;i++){
+    var prev = trials[i-1], cur = trials[i];
     if(prev.stim_word === cur.stim_word || prev.ink_color === cur.ink_color){
-      for(let j=i+1;j<trials.length;j++){
-        const cand = trials[j], next = trials[i+1];
-        const okPrev = cand.stim_word !== prev.stim_word && cand.ink_color !== prev.ink_color;
-        const okNext = !next || (cand.stim_word !== next.stim_word && cand.ink_color !== next.ink_color);
-        if(okPrev && okNext){ [trials[i], trials[j]] = [trials[j], trials[i]]; break; }
+      for(var j=i+1;j<trials.length;j++){
+        var cand = trials[j], next = trials[i+1];
+        var okPrev = cand.stim_word !== prev.stim_word && cand.ink_color !== prev.ink_color;
+        var okNext = !next || (cand.stim_word !== next.stim_word && cand.ink_color !== next.ink_color);
+        if(okPrev && okNext){ var tmp=trials[i]; trials[i]=trials[j]; trials[j]=tmp; break; }
       }
     }
   }
@@ -113,86 +108,83 @@ function fixNoImmediateRepeats(trials){
 function smoothJunction(lastOfPrev, block){
   if(!lastOfPrev || !block.length) return block;
   if(block[0].stim_word === lastOfPrev.stim_word || block[0].ink_color === lastOfPrev.ink_color){
-    for(let j=1;j<block.length;j++){
-      const b = block[j];
+    for(var j=1;j<block.length;j++){
+      var b = block[j];
       if(b.stim_word !== lastOfPrev.stim_word && b.ink_color !== lastOfPrev.ink_color){
-        [block[0], block[j]] = [block[j], block[0]]; break;
+        var tmp=block[0]; block[0]=block[j]; block[j]=tmp; break;
       }
     }
   }
   return block;
 }
-/* strumień 25 elementów bez powtórek (losowa permutacja 5 kolorów ×5) */
 function makeStreamNoAdj_25(asNames){
-  const base = shuffle(COLORS.map(c => asNames ? c.name : c));
-  const out = [];
-  for(let r=0;r<5;r++){
-    for(let i=0;i<base.length;i++){
+  var base = shuffle(COLORS.map(c => asNames ? c.name : c));
+  var out = [];
+  for(var r=0;r<5;r++){
+    for(var i=0;i<base.length;i++){
       out.push(asNames ? base[i] : COLORS.find(c => c.name === base[i].name) || base[i]);
     }
   }
   return out;
 }
-/* 25 neutralnych KWADRATÓW (nazywanie koloru atramentu) */
 function make25_Squares(){
-  const inkStream = makeStreamNoAdj_25(false);
-  return inkStream.map(ink => ({
-    stim_word: "SQUARE",
-    ink_color: ink.hex,
-    congruency: 2,
-    correct_key: ink.key,
-    correct_idx: ink.idx,
-    stim_type: "SQUARE"
-  }));
+  var inkStream = makeStreamNoAdj_25(false);
+  return inkStream.map(function(ink){
+    return {
+      stim_word: "SQUARE",
+      ink_color: ink.hex,
+      congruency: 2,
+      correct_key: ink.key,
+      correct_idx: ink.idx,
+      stim_type: "SQUARE"
+    };
+  });
 }
-/* derangement słów względem atramentów */
 function derangeBySwaps(inkNames, wordNames){
-  for(let i=0;i<wordNames.length;i++){
+  for(var i=0;i<wordNames.length;i++){
     if(wordNames[i] === inkNames[i]){
-      let j = -1;
-      for(let k=i+1;k<wordNames.length;k++){
+      var j = -1;
+      for(var k=i+1;k<wordNames.length;k++){
         if(wordNames[k] !== inkNames[i] && wordNames[i] !== inkNames[k]){ j = k; break; }
       }
       if(j === -1){
-        for(let k=0;k<i;k++){
+        for(k=0;k<i;k++){
           if(wordNames[k] !== inkNames[i] && wordNames[i] !== inkNames[k]){ j = k; break; }
         }
       }
-      if(j !== -1){ [wordNames[i], wordNames[j]] = [wordNames[j], wordNames[i]]; }
+      if(j !== -1){ var tmp=wordNames[i]; wordNames[i]=wordNames[j]; wordNames[j]=tmp; }
     }
   }
   return wordNames;
 }
-/* 25 SŁÓW niekongruentnych (nazywanie koloru atramentu) */
 function make25_WordsIncongruent(){
-  const inkStream = makeStreamNoAdj_25(false);
-  const inkNames = inkStream.map(c => c.name);
-  const wordNames = makeStreamNoAdj_25(true);
-  const wordsDeranged = derangeBySwaps(inkNames, wordNames.slice());
+  var inkStream = makeStreamNoAdj_25(false);
+  var inkNames = inkStream.map(c => c.name);
+  var wordNames = makeStreamNoAdj_25(true);
+  var wordsDeranged = derangeBySwaps(inkNames, wordNames.slice());
 
-  const trials = [];
-  for(let i=0;i<25;i++){
-    const ink = inkStream[i];
-    let wName = wordsDeranged[i];
+  var trials = [];
+  for(var i=0;i<25;i++){
+    var ink = inkStream[i];
+    var wName = wordsDeranged[i];
     if(wName === ink.name){
-      const swapIdx = (i+1)%25;
-      [wordsDeranged[i], wordsDeranged[swapIdx]] = [wordsDeranged[swapIdx], wordsDeranged[i]];
+      var swapIdx = (i+1)%25;
+      var tmp = wordsDeranged[i]; wordsDeranged[i]=wordsDeranged[swapIdx]; wordsDeranged[swapIdx]=tmp;
       wName = wordsDeranged[i];
     }
     trials.push({
       stim_word: wName,
       ink_color: ink.hex,
       congruency: 0,
-      correct_key: ink.key,     // NAZYWAMY ATRAMENT
+      correct_key: ink.key,
       correct_idx: ink.idx,
       stim_type: "WORD"
     });
   }
   return fixNoImmediateRepeats(trials);
 }
-/* podział pary 25 na 13/12 z wygładzeniem */
 function split13_12(pair25, lastPrev){
-  let a = pair25.slice(0,13), b = pair25.slice(13);
+  var a = pair25.slice(0,13), b = pair25.slice(13);
   a = fixNoImmediateRepeats(a); a = smoothJunction(lastPrev, a);
   b = fixNoImmediateRepeats(b); b = smoothJunction(a[a.length-1], b);
   return { first13:a, next12:b };
@@ -201,11 +193,11 @@ function split13_12(pair25, lastPrev){
 /* ------- CSV utils ------- */
 function toCSV(rows){
   if(!rows.length) return "no_data\n";
-  const header = Object.keys(rows[0]), out=[header.join(",")];
-  for(let i=0;i<rows.length;i++){
-    const r = rows[i], line=[];
-    for(let k=0;k<header.length;k++){
-      const h=header[k]; const v=(r[h]==null ? "" : String(r[h]).replace(/"/g,'""'));
+  var header = Object.keys(rows[0]), out=[header.join(",")];
+  for(var i=0;i<rows.length;i++){
+    var r = rows[i], line=[];
+    for(var k=0;k<header.length;k++){
+      var h=header[k]; var v=(r[h]==null ? "" : String(r[h]).replace(/"/g,'""'));
       line.push(/["\n,]/.test(v) ? '"'+v+'"' : v);
     }
     out.push(line.join(","));
@@ -213,36 +205,36 @@ function toCSV(rows){
   return out.join("\n");
 }
 function downloadCSV(filename, csv){
-  const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
-  const a = document.createElement("a");
+  var blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+  var a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = filename;
   document.body.appendChild(a); a.click(); a.remove();
 }
 
 /* ------- APLIKACJA ------- */
-let SUBJECT = null;    // { code, num, isEven }
-let LOG = [];
-let BLOCKS = [];
+var SUBJECT = null;
+var LOG = [];
+var BLOCKS = [];
 
 function parseSubjectCode(code){
-  const m = /^K\s*(\d{2})$/.exec((code||"").trim().toUpperCase());
+  var m = /^K\s*(\d{2})$/.exec((code||"").trim().toUpperCase());
   if(!m) return null;
-  const num = parseInt(m[1],10);
-  const isEven = (num % 2 === 0);
-  return { code: "K"+m[1], num, isEven };
+  var num = parseInt(m[1],10);
+  var isEven = (num % 2 === 0);
+  return { code: "K"+m[1], num: num, isEven: isEven };
 }
 
 /* ------- EKRANY ------- */
 function screenIntro(){
   app.innerHTML =
     '<h2>Eksperyment Stroopa 2 — Grupa K</h2>' +
-    '<div class="row"><p>Wpisz przydzielony Tobie kod <strong>(jedna litera i dwie cyfry, np. K01)</strong> i naciśnij „Dalej”.</p>' +
+    '<div class="row"><p>Wpisz przydzielony Tobie kod <strong>(jedna litera i dwie cyfry, np. K01)</strong> i naciśnij „Dalej".</p>' +
     '<input id="pid" type="text" maxlength="3" pattern="[Kk][0-9]{2}" placeholder="np. K03" autofocus></div>' +
     '<div class="row"><button class="btn" id="next1">Dalej</button></div>';
   document.getElementById('next1').onclick = function(){
-    const v = (document.getElementById('pid').value||"").trim().toUpperCase();
-    const info = parseSubjectCode(v);
+    var v = (document.getElementById('pid').value||"").trim().toUpperCase();
+    var info = parseSubjectCode(v);
     if(!info){ alert("Nieprawidłowy kod. Użyj formatu K01..K99. (Ten link dotyczy grupy K — nazywanie koloru)"); return; }
     SUBJECT = info;
     screenInstr();
@@ -250,87 +242,67 @@ function screenIntro(){
 }
 
 function screenInstr(){
+  var warn = '<p class="center" style="color:#b22222;font-weight:700;">Uwaga: ten link dotyczy nazywania kolorów. Kontynuuj zgodnie z instrukcją.</p>';
   app.innerHTML =
     '<div class="instr-card">'+
-      '<h3 class="center">Instrukcja — NAZYWANIE KOLORU</h3>'+
-      '<p class="center" style="font-size:20px;color:#d22;font-weight:700">⚠️ ZAWSZE PODAWAJ KOLOR ATRAMENTU! Ignoruj TREŚĆ SŁOWA.</p>'+
+      '<h3 class="center">Instrukcja — NAZYWANIE KOLORU</h3>'+ warn +
+      '<p class="center" style="font-size:20px;color:#d22;font-weight:700">⚠️ NAZYWAJ KOLORY, ignoruj treść słowa!</p>'+
       '<p class="center">Twoim zadaniem jest jak najszybsze <b>NAZWANIE KOLORU</b>, w którym widzisz bodziec (kwadrat lub słowo).</p>'+
       '<div class="center" style="margin:10px 0 6px">'+
-        '<span class="keypill"><span class="k">C</span>= czerwony</span>'+
-        '<span class="keypill"><span class="k">Z</span>= zielony</span>'+
-        '<span class="keypill"><span class="k">N</span>= niebieski</span>'+
-        '<span class="keypill"><span class="k">F</span>= fioletowy</span>'+
-        '<span class="keypill"><span class="k">B</span>= brązowy</span>'+
+        '<span class="keypill"><span class="k">C</span>dla koloru czerwony</span>'+
+        '<span class="keypill"><span class="k">Z</span>dla zielony</span>'+
+        '<span class="keypill"><span class="k">N</span>dla niebieski</span>'+
+        '<span class="keypill"><span class="k">F</span>dla fioletowy</span>'+
+        '<span class="keypill"><span class="k">B</span>dla brązowy</span>'+
       '</div>'+
-      '<p class="center" style="color:#b22222;font-weight:700;">⚠️ Upewnij się, że CAPS LOCK jest wyłączony.</p>'+
+      '<p class="center" style="color:#b22222;font-weight:700;">⚠️ Upewnij się, że <u>CAPS LOCK jest wyłączony</u>.</p>'+
       '<div class="center" style="margin-top:10px"><button class="btn" id="startExp">Zaczynam</button></div>'+
     '</div>';
   document.getElementById('startExp').onclick = prepareAndStart;
 }
 
-function screenPreBlock(n, label){
+function screenPreBlock(n){
   app.innerHTML =
-    '<div class="block-info">BLOK '+n+': '+label+'</div>'+
+    '<div class="block-info">BLOK '+n+': nazywaj kolory.</div>'+
     '<div class="row"><button class="btn" id="startBlockBtn">Start</button></div>';
 }
 
 /* ------- SEKWENCJA: ABBA / BAAB, bloki 13–13–12–12 ------- */
 function prepareAndStart(){
-  // budujemy pary po 25
-  const pairK  = make25_Squares();          // A (Kwadraty)
-  const pairKS = make25_WordsIncongruent(); // B (Słowa niekongruentne)
+  var pairK  = make25_Squares();
+  var pairKS = make25_WordsIncongruent();
 
-  // dzielimy na (13,12) z wygładzaniem
-  const splitK  = split13_12(pairK, null);
-  const splitKS = split13_12(pairKS, splitK.first13[splitK.first13.length-1]);
+  var splitK  = split13_12(pairK, null);
+  var splitKS = split13_12(pairKS, splitK.first13[splitK.first13.length-1]);
 
   if(SUBJECT.isEven){
-    // ABBA: K-13, KS-13, KS-12, K-12
-    BLOCKS = [
-      { trials: splitK.first13,  label: 'Kwadraty (nazywanie koloru)' },
-      { trials: splitKS.first13, label: 'Słowa w obcych kolorach (nazywanie koloru, niekongruentne)' },
-      { trials: splitKS.next12,  label: 'Słowa w obcych kolorach (nazywanie koloru, niekongruentne)' },
-      { trials: splitK.next12,   label: 'Kwadraty (nazywanie koloru)' }
-    ];
+    BLOCKS = [ splitK.first13, splitKS.first13, splitKS.next12, splitK.next12 ];
   } else {
-    // BAAB: KS-13, K-13, K-12, KS-12
-    BLOCKS = [
-      { trials: splitKS.first13, label: 'Słowa w obcych kolorach (nazywanie koloru, niekongruentne)' },
-      { trials: splitK.first13,  label: 'Kwadraty (nazywanie koloru)' },
-      { trials: splitK.next12,   label: 'Kwadraty (nazywanie koloru)' },
-      { trials: splitKS.next12,  label: 'Słowa w obcych kolorach (nazywanie koloru, niekongruentne)' }
-    ];
+    BLOCKS = [ splitKS.first13, splitK.first13, splitK.next12, splitKS.next12 ];
   }
 
-  // wygładzamy granice między kolejnymi blokami
-  for(let i=1;i<BLOCKS.length;i++){
-    const prevLast = BLOCKS[i-1].trials[BLOCKS[i-1].trials.length-1];
-    BLOCKS[i].trials = smoothJunction(prevLast, BLOCKS[i].trials);
+  for(var i=1;i<BLOCKS.length;i++){
+    var prevLast = BLOCKS[i-1][BLOCKS[i-1].length-1];
+    BLOCKS[i] = smoothJunction(prevLast, BLOCKS[i]);
   }
 
   currentBlockIndex = 0;
-  screenPreBlock(1, BLOCKS[0].label);
+  screenPreBlock(1);
   document.getElementById('startBlockBtn').onclick = function(){ runBlock(currentBlockIndex); };
 }
 
-let currentBlockIndex = 0;
+var currentBlockIndex = 0;
 
 async function runBlock(blockIdx){
-  const pack = BLOCKS[blockIdx];
-  const trials = pack.trials;
-  const blockNumber = blockIdx + 1;
+  var trials = BLOCKS[blockIdx];
+  var blockNumber = blockIdx + 1;
 
-  // dla pewności fokus poza przyciskami
-  if (document.activeElement && typeof document.activeElement.blur === 'function') {
-    document.activeElement.blur();
-  }
-
-  for(let i=0;i<trials.length;i++){
+  for(var i=0;i<trials.length;i++){
     app.innerHTML = '<div class="fix">+</div>';
     await sleep(CONFIG.FIX);
 
-    const t = trials[i];
-    const start = performance.now();
+    var t = trials[i];
+    var start = performance.now();
 
     if(t.stim_type === "SQUARE"){
       app.innerHTML = '<div class="stim-card"><div class="square" style="background-color:'+t.ink_color+';"></div></div>';
@@ -338,17 +310,17 @@ async function runBlock(blockIdx){
       app.innerHTML = '<div class="stim-card"><div class="big" style="color:'+t.ink_color+';">'+t.stim_word+'</div></div>';
     }
 
-    const result = await new Promise(resolve => {
-      let errors = 0; let timer;
+    var result = await new Promise(function(resolve){
+      var errors = 0; var timer;
       function onKey(e){
-        const k = (e.key||"").toLowerCase();
+        var k = (e.key||"").toLowerCase();
         if(k==="c"||k==="z"||k==="n"||k==="f"||k==="b"){
           if(k !== t.correct_key){ errors++; return; }
-          const rt = Math.round(performance.now() - start);
-          cleanup(); resolve({ key:k, status:1, rt, errors });
+          var rt = Math.round(performance.now() - start);
+          cleanup(); resolve({ key:k, status:1, rt:rt, errors:errors });
         }
       }
-      function onTimeout(){ cleanup(); resolve({ key:"", status:3, rt: CONFIG.SAFETY_MS, errors }); }
+      function onTimeout(){ cleanup(); resolve({ key:"", status:3, rt: CONFIG.SAFETY_MS, errors:errors }); }
       function cleanup(){ window.removeEventListener('keydown', onKey); clearTimeout(timer); }
       window.addEventListener('keydown', onKey);
       timer = setTimeout(onTimeout, CONFIG.SAFETY_MS);
@@ -378,75 +350,66 @@ async function runBlock(blockIdx){
 
   currentBlockIndex++;
   if(currentBlockIndex < BLOCKS.length){
-    screenPreBlock(currentBlockIndex+1, BLOCKS[currentBlockIndex].label);
+    screenPreBlock(currentBlockIndex+1);
     document.getElementById('startBlockBtn').onclick = function(){ runBlock(currentBlockIndex); };
   } else {
     finish();
   }
 }
 
-/* ------- ZAKOŃCZENIE: wysyłka (CORS, 2 próby) + fallback CSV ------- */
+/* ------- ZAKOŃCZENIE ------- */
 async function finish(){
-  const ksq = LOG.filter(r => r.phase==="K_SQUARES");
-  const kwd = LOG.filter(r => r.phase==="K_WORDS");
-
-  function avgRT(arr){
-    const valid = arr.filter(r => r.status===1 && r.rt < CONFIG.SAFETY_MS);
-    if(!valid.length) return 0;
-    const sum = valid.reduce((a,b) => a + b.rt, 0);
-    return Math.round(sum / valid.length);
-  }
-
-  const rtK   = avgRT(ksq);
-  const rtKS  = avgRT(kwd);
-  const diff  = rtKS - rtK;
-  const pct   = rtK > 0 ? ((diff / rtK) * 100).toFixed(1) : 0;
-
-  const summaryHTML =
-    '<div class="instr-card">'+
-      '<h3 class="center">Wyniki — Grupa K</h3>'+
-      '<div class="stats">'+
-        '<span class="statpill">Kwadraty: '+rtK+' ms</span>'+
-        '<span class="statpill">Słowa (niekongr.): '+rtKS+' ms</span>'+
-        '<span class="statpill">Różnica: +'+diff+' ms ('+pct+'%)</span>'+
-      '</div>'+
-    '</div>';
-
-  app.innerHTML = '<p class="muted">Trwa pobieranie wyników…</p>';
+  app.innerHTML = '<p class="muted">Przygotowywanie wyników…</p>';
+  await sleep(300);
 
   let sentOK = false;
+  
   if (CONFIG.ENDPOINT_URL) {
     for (let attempt = 1; attempt <= 2; attempt++) {
+      app.innerHTML = '<p class="muted">Wysyłanie danych do arkusza…</p><p class="progress">Próba ' + attempt + '/2</p>';
+      
+      console.log('🚀 Wysyłka próba', attempt);
+      const startTime = performance.now();
+      
       try {
-        const controller = new AbortController();
-        const t = setTimeout(() => controller.abort(), CONFIG.SEND_TIMEOUT_MS);
-
-        const res = await fetch(CONFIG.ENDPOINT_URL, {
+        const fetchPromise = fetch(CONFIG.ENDPOINT_URL, {
           method: "POST",
-          mode: "cors",
-          headers: { "Content-Type": "text/plain;charset=utf-8" }, // simple request
-          body: JSON.stringify({ payload: LOG }),
-          signal: controller.signal
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ payload: LOG })
         });
-
-        clearTimeout(t);
-        if (res && res.ok) { sentOK = true; break; }
-      } catch (_) {
+        
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout')), CONFIG.SEND_TIMEOUT_MS)
+        );
+        
+        await Promise.race([fetchPromise, timeoutPromise]);
+        
+        const elapsed = Math.round(performance.now() - startTime);
+        console.log('✅ Wysłano w', elapsed + 'ms');
+        sentOK = true;
+        break;
+        
+      } catch (err) {
+        const elapsed = Math.round(performance.now() - startTime);
+        console.log('❌ Błąd próba', attempt, '- czas:', elapsed + 'ms', '- błąd:', err.message);
         if (attempt === 1) { await sleep(800); }
       }
     }
   }
 
   if (!sentOK && CONFIG.DOWNLOAD_CSV_FALLBACK){
+    console.log('📥 Pobieranie CSV jako backup');
+    app.innerHTML = '<p class="muted">Pobieranie pliku CSV…</p>';
     const csv = toCSV(LOG);
-    const fname = 'stroop_K_'+(SUBJECT?SUBJECT.code:'KXX')+'_'+new Date().toISOString().replace(/[:.]/g,'-')+'.csv';
+    const fname = 'stroop_kolory_'+(SUBJECT?SUBJECT.code:'KXX')+'_'+new Date().toISOString().replace(/[:.]/g,'-')+'.csv';
     await sleep(300);
     downloadCSV(fname, csv);
   }
 
-  app.innerHTML = '<p class="muted">Pobieranie danych zakończone.</p>';
-  await sleep(700);
-  app.innerHTML = summaryHTML + '<p class="muted center" style="margin-top:12px">Dziękujemy za udział w badaniu.</p>';
+  app.innerHTML = '<p class="muted">Zakończono.</p>';
+  await sleep(500);
+  app.innerHTML = '<h2>Dziękujemy za udział w badaniu.</h2>';
 }
 
 /* start */
